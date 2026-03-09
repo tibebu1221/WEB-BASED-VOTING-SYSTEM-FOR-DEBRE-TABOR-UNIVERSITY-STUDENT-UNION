@@ -1,0 +1,376 @@
+<?php
+// confirm_vote.php
+session_start();
+
+// Check if user is logged in
+if (!isset($_SESSION['u_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Check if candidate data is in session
+if (!isset($_SESSION['candidate_id']) || !isset($_SESSION['candidate_name'])) {
+    header("Location: cast.php");
+    exit();
+}
+
+$candidate_id = $_SESSION['candidate_id'];
+$candidate_name = $_SESSION['candidate_name'];
+
+// Handle final vote submission
+if (isset($_POST['confirm_vote'])) {
+    include("connection.php");
+    
+    $user_id = $_SESSION['u_id'];
+    
+    // Get user details
+    $stmt = $conn->prepare("SELECT fname, mname, year, department, vid FROM voter WHERE vid = ?");
+    $stmt->bind_param("s", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+    
+    // Insert vote into result table
+    $insert_stmt = $conn->prepare("INSERT INTO result (vid, u_id, fname, mname, year, department, choice) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $insert_stmt->bind_param("sssssss", 
+        $user_id, 
+        $user['vid'], 
+        $user['fname'], 
+        $user['mname'], 
+        $user['year'], 
+        $user['department'], 
+        $candidate_id
+    );
+    
+    if ($insert_stmt->execute()) {
+        // Update voter status
+        $update_stmt = $conn->prepare("UPDATE voter SET status = 1 WHERE vid = ?");
+        $update_stmt->bind_param("s", $user_id);
+        $update_stmt->execute();
+        
+        // Clear session data
+        unset($_SESSION['candidate_id']);
+        unset($_SESSION['candidate_name']);
+        
+        // Set success flag
+        $_SESSION['vote_success'] = true;
+        
+        // Redirect to cast.php with success parameter
+        header("Location: cast.php?voted=success");
+        exit();
+    } else {
+        $error = "Failed to submit vote. Please try again.";
+    }
+    
+    $conn->close();
+}
+
+// Handle cancel
+if (isset($_POST['cancel_vote'])) {
+    unset($_SESSION['candidate_id']);
+    unset($_SESSION['candidate_name']);
+    header("Location: cast.php");
+    exit();
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Your Vote</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .confirmation-container {
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        .confirmation-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            animation: slideUp 0.5s ease;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card-header {
+            background: linear-gradient(to right, #1a2a6c, #2c3e8c);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #2ecc71, #3498db, #2ecc71);
+        }
+        
+        .card-header h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .card-body {
+            padding: 40px;
+        }
+        
+        .candidate-info {
+            text-align: center;
+            padding: 30px;
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .candidate-label {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .candidate-name {
+            font-size: 2.2rem;
+            color: #2c3e50;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .warning-box {
+            background-color: #fff3cd;
+            border: 2px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        
+        .warning-box i {
+            color: #f39c12;
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+        
+        .warning-box p {
+            color: #856404;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        
+        .important-notice {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .important-notice h4 {
+            color: #dc3545;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.3rem;
+        }
+        
+        .important-notice ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .important-notice li {
+            margin-bottom: 10px;
+            padding-left: 24px;
+            position: relative;
+            color: #495057;
+            font-size: 1rem;
+        }
+        
+        .important-notice li:before {
+            content: '⚠';
+            position: absolute;
+            left: 0;
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 18px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-confirm {
+            background: linear-gradient(to right, #2ecc71, #27ae60);
+            color: white;
+        }
+        
+        .btn-confirm:hover {
+            background: linear-gradient(to right, #27ae60, #219653);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(39, 174, 96, 0.3);
+        }
+        
+        .btn-cancel {
+            background-color: #f8f9fa;
+            color: #495057;
+            border: 2px solid #e9ecef;
+        }
+        
+        .btn-cancel:hover {
+            background-color: #e9ecef;
+            border-color: #dee2e6;
+            transform: translateY(-3px);
+        }
+        
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .candidate-name {
+                font-size: 1.8rem;
+            }
+            
+            .card-body {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="confirmation-container">
+        <div class="confirmation-card">
+            <div class="card-header">
+                <h2><i class="fas fa-vote-yea"></i> Confirm Your Vote</h2>
+                <p>Final verification before submission</p>
+            </div>
+            
+            <div class="card-body">
+                <?php if (isset($error)): ?>
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i> <?php echo $error; ?>
+                </div>
+                <?php endif; ?>
+                
+                <div class="candidate-info">
+                    <span class="candidate-label">You are about to vote for:</span>
+                    <div class="candidate-name"><?php echo htmlspecialchars($candidate_name); ?></div>
+                </div>
+                
+                <div class="warning-box">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p><strong>Important:</strong> This action cannot be undone. Once you submit your vote, it will be permanently recorded and cannot be changed. Please verify your selection carefully.</p>
+                </div>
+                
+                <div class="important-notice">
+                    <h4><i class="fas fa-exclamation-circle"></i> Important Notice</h4>
+                    <ul>
+                        <li>Once submitted, your vote cannot be changed</li>
+                        <li>Your vote is completely anonymous</li>
+                        <li>Voting is only allowed on the election day</li>
+                        <li>You can only vote once per election</li>
+                    </ul>
+                </div>
+                
+                <form method="POST" action="confirm_vote.php">
+                    <div class="action-buttons">
+                        <button type="submit" name="confirm_vote" class="btn btn-confirm">
+                            <i class="fas fa-check-circle"></i> Yes, Submit My Vote
+                        </button>
+                        
+                        <button type="submit" name="cancel_vote" class="btn btn-cancel">
+                            <i class="fas fa-undo-alt"></i> Cancel and Go Back
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Prevent accidental navigation
+        window.addEventListener('beforeunload', function (e) {
+            e.preventDefault();
+            e.returnValue = '';
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Enter key to confirm
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.querySelector('.btn-confirm').click();
+            }
+            
+            // Escape key to cancel
+            if (e.key === 'Escape') {
+                document.querySelector('.btn-cancel').click();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+/* Menu */
+#Menus {
+	width: 750px;
+	height:17px;
+	margin: 0 auto;
+	padding: 0;
+	}
+
+
+#Menus ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	line-height: normal;
+}
+
+
+#Menus li {
+	float: left;
+	
+}
+
+
+#Menus a {
+	display: block;
+	width: 80px;
+	height: 31px;
+	padding-top: 16px;
+	
+         text-decoration: none;
+	
+         text-align: center;
+	
+         font-family: Arial, Helvetica, sans-serif;
+	
+         font-size: 13px;
+	font-weight: bold;
+	
+          border-radius:13px;
+	color:white;
+}
+
+
+#Menus a:Hover {
+background-image: url(img/Hover.jpg);
+color:black;
+color: chartreuse;
+}
+
+#Menus .active a {
+	background: #F5FFFA url(img/Active.jpg)  repeat-x left bottom;
+	padding-left: 0;
+	color: #000000;
+}

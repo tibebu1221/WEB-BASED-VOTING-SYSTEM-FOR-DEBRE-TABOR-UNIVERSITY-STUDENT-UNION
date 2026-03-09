@@ -1,0 +1,136 @@
+/* Menu */
+
+#Menus {
+	
+width: 500px;
+	
+height:12px;
+	
+margin: 0 auto;
+	
+padding: 0;
+	
+background: url(image/Menu.jpg);
+	
+
+}
+
+
+#Menus ul 
+{
+	
+margin: 0;
+	
+padding: 0;
+	
+list-style: none;
+	
+line-height: normal;
+
+}
+
+
+#Menus li 
+{
+	
+float: left;
+	
+
+}
+
+
+#Menus a 
+{
+	
+display: block;
+	
+width: 80px;
+	
+height: 31px;
+	
+padding-top: 16px;
+	
+text-decoration: none;
+	
+text-align: center;
+	
+font-family: Arial, Helvetica, sans-serif;
+	
+font-size: 13px;
+	
+font-weight: bold;
+	
+border-radius:13px;
+	
+color:white;
+}
+
+
+#Menus a:Hover
+ {
+
+background-image: url(img/Hover.jpg);
+
+color:black;
+
+color: #30476A;
+
+
+}
+
+#Menus .active a
+ {
+	
+background: #FBFBFC url(img/Active.jpg)  repeat-x left bottom;
+	
+padding-left: 0;
+	
+color: #30476A;
+
+}
+
+
+.wrong
+
+{
+	
+font-family:Arial, Helvetica, sans-serif;
+	
+font-size:14px;
+	
+color:#FF0000;
+	
+text-align:left;
+	
+font-weight:bold;
+	
+padding:5px 5px 5px 25px;
+	
+border:#FF0000 thin solid;
+	
+background:#FFECEC url('image/wrong.png') left center no-repeat;
+
+}
+
+
+
+.success
+
+{
+	
+font-family:Arial, Helvetica, sans-serif;
+	
+font-size:14px;
+	
+color:#008800;
+	
+text-align:left;
+	
+font-weight:bold;
+	
+padding:5px 5px 5px 25px;
+	
+border:#008000 thin solid;
+	
+background:#EAFFEA url('image/tick.png') left center no-repeat;
+}
